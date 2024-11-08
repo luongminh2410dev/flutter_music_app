@@ -37,9 +37,6 @@ class Song {
   }
 
   @override
-  int get hashCode => super.hashCode;
-
-  @override
   String toString() {
     // TODO: implement toString
     return 'id: $id - title: $title';
