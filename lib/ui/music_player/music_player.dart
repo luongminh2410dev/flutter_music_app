@@ -40,20 +40,38 @@ class _MusicPlayerPageState extends State<MusicPlayerPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _thumbnailAnimController;
   late AudioPlayerManager _audioPlayerManager;
+  late int _selectedSongIndex;
+  late Song _song;
+  late double _currentAnimPosition;
 
   @override
   void initState() {
     super.initState();
-    _audioPlayerManager =
-        AudioPlayerManager(songUrl: widget.playingSong.source);
+    _currentAnimPosition = 0.0;
+    _song = widget.playingSong;
+    _audioPlayerManager = AudioPlayerManager(songUrl: _song.source);
     _audioPlayerManager.init();
-    _thumbnailAnimController =
-        AnimationController(vsync: this, duration: const Duration(seconds: 12));
+    _thumbnailAnimController = AnimationController(
+        vsync: this, duration: const Duration(seconds: 100));
+
+    _selectedSongIndex = widget.songs.indexOf(_song);
+
+    _audioPlayerManager.player.playerStateStream.listen((state) {
+      if (state.processingState == ProcessingState.ready) {
+        if (state.playing) {
+          _thumbnailAnimController.forward(from: _currentAnimPosition);
+          _thumbnailAnimController.repeat();
+        }
+      } else if (state.processingState == ProcessingState.completed) {
+        _thumbnailAnimController.stop();
+      }
+    });
   }
 
   @override
   void dispose() {
-    _audioPlayerManager.player.dispose();
+    _audioPlayerManager.dispose();
+    _thumbnailAnimController.dispose();
     super.dispose();
   }
 
@@ -73,154 +91,156 @@ class _MusicPlayerPageState extends State<MusicPlayerPage>
             ),
             onTap: () {},
           )),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          const SizedBox(height: 24),
-          Text(
-            widget.playingSong.album,
-            style: const TextStyle(
-              inherit: false,
-              color: Colors.black,
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
+      child: SafeArea(
+        top: false,
+        bottom: true,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            const SizedBox(height: 24),
+            Text(
+              _song.album,
+              style: const TextStyle(
+                inherit: false,
+                color: Colors.black,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            '_ ___ _',
-            style: TextStyle(
-              inherit: false,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 24),
-          RotationTransition(
-            turns:
-                Tween(begin: 0.0, end: 1.0).animate(_thumbnailAnimController),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: SizedBox(
-                width: screenWidth - delta,
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: FadeInImage.assetNetwork(
-                    image: widget.playingSong.image,
-                    placeholder: 'assets/itunes.png',
-                    imageErrorBuilder: (context, error, stackTrace) {
-                      return AspectRatio(
+            const SizedBox(height: 24),
+            Expanded(
+              flex: 1,
+              child: Center(
+                child: RotationTransition(
+                  turns: Tween(begin: 0.0, end: 1.0)
+                      .animate(_thumbnailAnimController),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: SizedBox(
+                      width: screenWidth - delta,
+                      child: AspectRatio(
                         aspectRatio: 1,
-                        child: Image.asset(
-                          'assets/itunes.png',
+                        child: FadeInImage.assetNetwork(
+                          image: _song.image,
+                          placeholder: 'assets/itunes.png',
+                          imageErrorBuilder: (context, error, stackTrace) {
+                            return AspectRatio(
+                              aspectRatio: 1,
+                              child: Image.asset(
+                                'assets/itunes.png',
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white, // Màu nền của container
-                borderRadius: BorderRadius.circular(8), // Bo góc (tuỳ chọn)
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey
-                        .withOpacity(0.2), // Màu của shadow với độ trong suốt
-                    spreadRadius: 1, // Bán kính lan toả
-                    blurRadius: 7, // Độ mờ của shadow
-                    offset:
-                        const Offset(0, 1), // Độ dịch chuyển của shadow (x, y)
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white, // Màu nền của container
+                  borderRadius: BorderRadius.circular(8), // Bo góc (tuỳ chọn)
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey
+                          .withOpacity(0.2), // Màu của shadow với độ trong suốt
+                      spreadRadius: 1, // Bán kính lan toả
+                      blurRadius: 7, // Độ mờ của shadow
+                      offset: const Offset(
+                          0, 1), // Độ dịch chuyển của shadow (x, y)
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          child: const Icon(
+                            Icons.share,
+                            color: Colors.grey,
+                          ),
+                          onTap: () {},
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                _song.title,
+                                style: const TextStyle(
+                                  inherit: false,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _song.artist,
+                                style: const TextStyle(
+                                  inherit: false,
+                                  color: Colors.grey,
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                        GestureDetector(
+                          child: const Icon(
+                            Icons.favorite_outline,
+                            color: Colors.grey,
+                          ),
+                          onTap: () {},
+                        )
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: IntrinsicHeight(
-                  child: Row(
+            ),
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white, // Màu nền của container
+                  borderRadius: BorderRadius.circular(8), // Bo góc (tuỳ chọn)
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 7,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    top: 16,
+                    left: 12,
+                    right: 12,
+                    bottom: 12,
+                  ),
+                  child: Column(
                     children: [
-                      GestureDetector(
-                        child: const Icon(
-                          Icons.share,
-                          color: Colors.grey,
-                        ),
-                        onTap: () {},
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              widget.playingSong.title,
-                              style: const TextStyle(
-                                inherit: false,
-                                color: Colors.black,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              widget.playingSong.artist,
-                              style: const TextStyle(
-                                inherit: false,
-                                color: Colors.grey,
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                      GestureDetector(
-                        child: const Icon(
-                          Icons.favorite_outline,
-                          color: Colors.grey,
-                        ),
-                        onTap: () {},
-                      )
+                      _progressBar(),
+                      _mediaButtons(),
                     ],
                   ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white, // Màu nền của container
-                borderRadius: BorderRadius.circular(8), // Bo góc (tuỳ chọn)
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.2),
-                    spreadRadius: 1,
-                    blurRadius: 7,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  top: 16,
-                  left: 12,
-                  right: 12,
-                  bottom: 12,
-                ),
-                child: Column(
-                  children: [
-                    _progressBar(),
-                    _mediaButtons(),
-                  ],
-                ),
-              ),
-            ),
-          )
-        ],
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
@@ -251,6 +271,7 @@ class _MusicPlayerPageState extends State<MusicPlayerPage>
             ),
             onSeek: (value) {
               _audioPlayerManager.player.seek(value);
+              _audioPlayerManager.player.play();
             },
           );
         });
@@ -266,9 +287,7 @@ class _MusicPlayerPageState extends State<MusicPlayerPage>
 
         if (playing != true) {
           return MediaButtonControl(
-            function: () {
-              _audioPlayerManager.player.play();
-            },
+            function: _audioPlayerManager.player.play,
             icon: Icons.play_arrow,
             color: Colors.black,
             size: 40,
@@ -290,6 +309,9 @@ class _MusicPlayerPageState extends State<MusicPlayerPage>
             return MediaButtonControl(
               function: () {
                 _audioPlayerManager.player.seek(Duration.zero);
+                _currentAnimPosition = 0.0;
+                _thumbnailAnimController.forward(from: _currentAnimPosition);
+                _thumbnailAnimController.stop();
               },
               icon: Icons.replay,
               color: Colors.black,
@@ -299,6 +321,8 @@ class _MusicPlayerPageState extends State<MusicPlayerPage>
             return MediaButtonControl(
               function: () {
                 _audioPlayerManager.player.pause();
+                _thumbnailAnimController.stop();
+                _currentAnimPosition = _thumbnailAnimController.value;
               },
               icon: Icons.pause,
               color: Colors.black,
@@ -322,15 +346,15 @@ class _MusicPlayerPageState extends State<MusicPlayerPage>
               color: Colors.grey,
               size: 20,
             ),
-            const MediaButtonControl(
-              function: null,
+            MediaButtonControl(
+              function: changePrevSong,
               icon: Icons.skip_previous,
               color: Colors.black,
               size: 32,
             ),
             _playButton(),
-            const MediaButtonControl(
-              function: null,
+            MediaButtonControl(
+              function: _changeNextSong,
               icon: Icons.skip_next,
               color: Colors.black,
               size: 32,
@@ -345,6 +369,44 @@ class _MusicPlayerPageState extends State<MusicPlayerPage>
         ),
       ),
     );
+  }
+
+  void _changeNextSong() {
+    _thumbnailAnimController.stop();
+    _currentAnimPosition = 0;
+    _thumbnailAnimController.value = _currentAnimPosition;
+    if (_selectedSongIndex == widget.songs.length - 1) {
+      _selectedSongIndex = 0;
+    } else {
+      ++_selectedSongIndex;
+    }
+    final nextSong = widget.songs[_selectedSongIndex];
+    _audioPlayerManager.updateSongUrl(nextSong.source);
+    setState(() {
+      _song = nextSong;
+    });
+  }
+
+  void changePrevSong() {
+    _thumbnailAnimController.stop();
+    _currentAnimPosition = 0;
+    _thumbnailAnimController.value = _currentAnimPosition;
+    if (_selectedSongIndex == 0) {
+      _selectedSongIndex = widget.songs.length - 1;
+    } else {
+      --_selectedSongIndex;
+    }
+    final prevSong = widget.songs[_selectedSongIndex];
+    _audioPlayerManager.updateSongUrl(prevSong.source);
+    setState(() {
+      _song = prevSong;
+    });
+  }
+
+  void startThumbnailAnim() {
+    _currentAnimPosition = 0;
+    _thumbnailAnimController.forward(from: _currentAnimPosition);
+    _thumbnailAnimController.repeat();
   }
 }
 

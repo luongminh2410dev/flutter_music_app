@@ -18,7 +18,7 @@ class AudioPlayerManager {
     required this.songUrl,
   });
 
-  final String songUrl;
+  String songUrl;
   final player = AudioPlayer();
   Stream<DurationState>? durationState;
 
@@ -33,5 +33,14 @@ class AudioPlayerManager {
       ),
     );
     player.setUrl(songUrl);
+  }
+
+  void updateSongUrl(String url) {
+    songUrl = url;
+    init();
+  }
+
+  void dispose() {
+    player.dispose();
   }
 }
