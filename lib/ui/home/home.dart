@@ -5,6 +5,7 @@ import 'package:music_app/ui/discovery/discovery.dart';
 import 'package:music_app/ui/home/viewmodal.dart';
 import 'package:music_app/ui/music_player/music_player.dart';
 import 'package:music_app/ui/settings/settings.dart';
+import 'package:music_app/ui/user/detail_profile.dart';
 import 'package:music_app/ui/user/user.dart';
 
 class MusicApp extends StatelessWidget {
@@ -34,16 +35,16 @@ class _MusicHomePageState extends State<MusicHomePage> {
   final List<Widget> _tabs = [
     const HomeTab(),
     const DiscoveryTab(),
-    const UserTab(),
+    const ProfileNavigator(),
     const SettingsTab(),
   ];
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      navigationBar: const CupertinoNavigationBar(
-        middle: Text("Music App"),
-        backgroundColor: Colors.white,
-      ),
+      // navigationBar: const CupertinoNavigationBar(
+      //   middle: Text("Music App"),
+      //   backgroundColor: Colors.white,
+      // ),
       child: CupertinoTabScaffold(
           tabBar: CupertinoTabBar(
             backgroundColor: Theme.of(context).colorScheme.onInverseSurface,
@@ -146,6 +147,10 @@ class _HomeTabPageState extends State<HomeTabPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: const CupertinoNavigationBar(
+        backgroundColor: Colors.white,
+        middle: Text('Music App'),
+      ),
       body: getBody(),
       backgroundColor: const Color.fromRGBO(255, 255, 255, 0.7),
     );
@@ -203,6 +208,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
     }
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
@@ -267,6 +273,31 @@ class _HomeTabPageState extends State<HomeTabPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class ProfileNavigator extends StatelessWidget {
+  const ProfileNavigator({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Navigator(
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case 'profile':
+            return MaterialPageRoute(builder: (context) => const UserTab());
+          case 'detail-profile':
+            final args = settings.arguments as Map<String, dynamic>?;
+            return MaterialPageRoute(
+                builder: (context) => DetailProfile(
+                      param1: args?['param1'] ?? '',
+                      param2: args?['param2'],
+                    ));
+          default:
+            return MaterialPageRoute(builder: (context) => const UserTab());
+        }
+      },
     );
   }
 }
