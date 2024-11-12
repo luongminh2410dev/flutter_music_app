@@ -16,8 +16,10 @@ class DurationState {
 class AudioPlayerManager {
   AudioPlayerManager({
     required this.songUrl,
+    required this.songUrls,
   });
 
+  List<String> songUrls;
   String songUrl;
   final player = AudioPlayer();
   Stream<DurationState>? durationState;
@@ -32,12 +34,17 @@ class AudioPlayerManager {
         total: playbackEvent.duration,
       ),
     );
-    player.setUrl(songUrl);
-  }
+    final initIndex = songUrls.indexOf(songUrl);
+    final playlist = ConcatenatingAudioSource(
+      // Start loading next item just before reaching it
+      useLazyPreparation: true,
+      // Customise the shuffle algorithm
+      shuffleOrder: DefaultShuffleOrder(),
+      // Specify the playlist items
+      children: songUrls.map((url) => AudioSource.uri(Uri.parse(url))).toList(),
+    );
 
-  void updateSongUrl(String url) {
-    songUrl = url;
-    init();
+    player.setAudioSource(playlist, initialIndex: initIndex);
   }
 
   void dispose() {

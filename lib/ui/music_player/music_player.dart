@@ -4,6 +4,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:music_app/data/model/song.dart';
 import 'package:music_app/ui/music_player/audio_player_manager.dart';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
+import 'dart:async';
 
 class MusicPlayer extends StatelessWidget {
   const MusicPlayer({
@@ -40,21 +41,24 @@ class _MusicPlayerPageState extends State<MusicPlayerPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _thumbnailAnimController;
   late AudioPlayerManager _audioPlayerManager;
-  late int _selectedSongIndex;
   late Song _song;
   late double _currentAnimPosition;
+  bool _isShuffle = false;
+  late LoopMode _loopMode;
+  StreamSubscription? _playbackEventSubscription;
 
   @override
   void initState() {
     super.initState();
     _currentAnimPosition = 0.0;
     _song = widget.playingSong;
-    _audioPlayerManager = AudioPlayerManager(songUrl: _song.source);
+    _audioPlayerManager = AudioPlayerManager(
+      songUrls: widget.songs.map((item) => item.source).toList(),
+      songUrl: _song.source,
+    );
     _audioPlayerManager.init();
     _thumbnailAnimController = AnimationController(
         vsync: this, duration: const Duration(seconds: 100));
-
-    _selectedSongIndex = widget.songs.indexOf(_song);
 
     _audioPlayerManager.player.playerStateStream.listen((state) {
       if (state.processingState == ProcessingState.ready) {
@@ -66,10 +70,22 @@ class _MusicPlayerPageState extends State<MusicPlayerPage>
         _thumbnailAnimController.stop();
       }
     });
+
+    _loopMode = LoopMode.off;
+
+    _playbackEventSubscription =
+        _audioPlayerManager.player.playbackEventStream.listen((event) {
+      if (event.currentIndex != null) {
+        setState(() {
+          _song = widget.songs[event.currentIndex!];
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
+    _playbackEventSubscription?.cancel();
     _audioPlayerManager.dispose();
     _thumbnailAnimController.dispose();
     super.dispose();
@@ -121,6 +137,7 @@ class _MusicPlayerPageState extends State<MusicPlayerPage>
                       child: AspectRatio(
                         aspectRatio: 1,
                         child: FadeInImage.assetNetwork(
+                          fit: BoxFit.cover,
                           image: _song.image,
                           placeholder: 'assets/itunes.png',
                           imageErrorBuilder: (context, error, stackTrace) {
@@ -285,15 +302,6 @@ class _MusicPlayerPageState extends State<MusicPlayerPage>
         final processingState = playState?.processingState;
         final playing = playState?.playing;
 
-        if (playing != true) {
-          return MediaButtonControl(
-            function: _audioPlayerManager.player.play,
-            icon: Icons.play_arrow,
-            color: Colors.black,
-            size: 40,
-          );
-        }
-
         switch (processingState) {
           case ProcessingState.loading:
           case ProcessingState.buffering:
@@ -302,7 +310,11 @@ class _MusicPlayerPageState extends State<MusicPlayerPage>
               height: 48,
               child: Padding(
                 padding: EdgeInsets.all(8),
-                child: Center(child: CircularProgressIndicator()),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: Colors.grey,
+                  ),
+                ),
               ),
             );
           case ProcessingState.completed:
@@ -314,10 +326,18 @@ class _MusicPlayerPageState extends State<MusicPlayerPage>
                 _thumbnailAnimController.stop();
               },
               icon: Icons.replay,
-              color: Colors.black,
+              color: Theme.of(context).colorScheme.primary,
               size: 40,
             );
           default:
+            if (playing != true) {
+              return MediaButtonControl(
+                function: _audioPlayerManager.player.play,
+                icon: Icons.play_arrow,
+                color: Theme.of(context).colorScheme.primary,
+                size: 40,
+              );
+            }
             return MediaButtonControl(
               function: () {
                 _audioPlayerManager.player.pause();
@@ -325,7 +345,7 @@ class _MusicPlayerPageState extends State<MusicPlayerPage>
                 _currentAnimPosition = _thumbnailAnimController.value;
               },
               icon: Icons.pause,
-              color: Colors.black,
+              color: Theme.of(context).colorScheme.primary,
               size: 40,
             );
         }
@@ -340,29 +360,31 @@ class _MusicPlayerPageState extends State<MusicPlayerPage>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            const MediaButtonControl(
-              function: null,
+            MediaButtonControl(
+              function: _setShuffle,
               icon: Icons.shuffle,
-              color: Colors.grey,
+              color: _isShuffle
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.grey,
               size: 20,
             ),
             MediaButtonControl(
               function: changePrevSong,
               icon: Icons.skip_previous,
-              color: Colors.black,
+              color: Theme.of(context).colorScheme.primary,
               size: 32,
             ),
             _playButton(),
             MediaButtonControl(
               function: _changeNextSong,
               icon: Icons.skip_next,
-              color: Colors.black,
+              color: Theme.of(context).colorScheme.primary,
               size: 32,
             ),
-            const MediaButtonControl(
-              function: null,
-              icon: Icons.repeat,
-              color: Colors.grey,
+            MediaButtonControl(
+              function: _setRepeatOption,
+              icon: _getRepeatIcon(),
+              color: _getRepeatIconColor(),
               size: 20,
             ),
           ],
@@ -375,38 +397,60 @@ class _MusicPlayerPageState extends State<MusicPlayerPage>
     _thumbnailAnimController.stop();
     _currentAnimPosition = 0;
     _thumbnailAnimController.value = _currentAnimPosition;
-    if (_selectedSongIndex == widget.songs.length - 1) {
-      _selectedSongIndex = 0;
-    } else {
-      ++_selectedSongIndex;
-    }
-    final nextSong = widget.songs[_selectedSongIndex];
-    _audioPlayerManager.updateSongUrl(nextSong.source);
-    setState(() {
-      _song = nextSong;
-    });
+    _audioPlayerManager.player.seekToNext();
   }
 
   void changePrevSong() {
     _thumbnailAnimController.stop();
     _currentAnimPosition = 0;
     _thumbnailAnimController.value = _currentAnimPosition;
-    if (_selectedSongIndex == 0) {
-      _selectedSongIndex = widget.songs.length - 1;
-    } else {
-      --_selectedSongIndex;
-    }
-    final prevSong = widget.songs[_selectedSongIndex];
-    _audioPlayerManager.updateSongUrl(prevSong.source);
-    setState(() {
-      _song = prevSong;
-    });
+    _audioPlayerManager.player.seekToPrevious();
   }
 
   void startThumbnailAnim() {
     _currentAnimPosition = 0;
     _thumbnailAnimController.forward(from: _currentAnimPosition);
     _thumbnailAnimController.repeat();
+  }
+
+  void _setShuffle() {
+    _audioPlayerManager.player.setShuffleModeEnabled(!_isShuffle);
+    setState(() {
+      _isShuffle = !_isShuffle;
+    });
+  }
+
+  void _setRepeatOption() {
+    LoopMode _newLoopMode;
+    switch (_loopMode) {
+      case LoopMode.off:
+        _newLoopMode = LoopMode.all;
+        break;
+      case LoopMode.all:
+        _newLoopMode = LoopMode.one;
+        break;
+      default:
+        _newLoopMode = LoopMode.off;
+        break;
+    }
+    _audioPlayerManager.player.setLoopMode(_newLoopMode);
+    setState(() {
+      _loopMode = _newLoopMode;
+    });
+  }
+
+  IconData _getRepeatIcon() {
+    return switch (_loopMode) {
+      LoopMode.one => Icons.repeat_one,
+      _ => Icons.repeat,
+    };
+  }
+
+  Color? _getRepeatIconColor() {
+    if (_loopMode == LoopMode.off) {
+      return Colors.grey;
+    }
+    return Theme.of(context).colorScheme.primary;
   }
 }
 
