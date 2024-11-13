@@ -39,6 +39,7 @@ dependencies:
   audio_video_progress_bar: ^2.0.3
   rxdart: ^0.28.0
   flutter_riverpod: ^2.6.1
+  flutter_svg: ^2.0.14
 
 dev_dependencies:
   flutter_test:
@@ -63,3 +64,12 @@ flutter:
   assets:
     - assets/songs.json
     - assets/itunes.png
+    - assets/defaultAvatar.png
+    - assets/profileBackground.png
+    - assets/svg/ic_back.svg
+    - assets/svg/ic_edit.svg
+    - assets/svg/ic_event.svg
+    - assets/svg/ic_faceid.svg
+    - assets/svg/ic_logout.svg
+    - assets/svg/ic_password.svg
+    - assets/svg/ic_phone.svg

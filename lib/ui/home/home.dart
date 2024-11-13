@@ -4,8 +4,8 @@ import 'package:music_app/data/model/song.dart';
 import 'package:music_app/ui/discovery/discovery.dart';
 import 'package:music_app/ui/home/viewmodal.dart';
 import 'package:music_app/ui/music_player/music_player.dart';
+import 'package:music_app/ui/settings/page_one.dart';
 import 'package:music_app/ui/settings/settings.dart';
-import 'package:music_app/ui/user/detail_profile.dart';
 import 'package:music_app/ui/user/user.dart';
 
 class MusicApp extends StatelessWidget {
@@ -35,8 +35,8 @@ class _MusicHomePageState extends State<MusicHomePage> {
   final List<Widget> _tabs = [
     const HomeTab(),
     const DiscoveryTab(),
-    const ProfileNavigator(),
-    const SettingsTab(),
+    const SettingsNavigator(),
+    const UserTab(),
   ];
   @override
   Widget build(BuildContext context) {
@@ -53,9 +53,9 @@ class _MusicHomePageState extends State<MusicHomePage> {
               BottomNavigationBarItem(
                   icon: Icon(Icons.album), label: 'Discovery'),
               BottomNavigationBarItem(
-                  icon: Icon(Icons.person), label: 'Account'),
-              BottomNavigationBarItem(
                   icon: Icon(Icons.settings), label: 'Settings'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.person), label: 'Account'),
             ],
           ),
           tabBuilder: (BuildContext context, int index) {
@@ -277,25 +277,25 @@ class _HomeTabPageState extends State<HomeTabPage> {
   }
 }
 
-class ProfileNavigator extends StatelessWidget {
-  const ProfileNavigator({super.key});
+class SettingsNavigator extends StatelessWidget {
+  const SettingsNavigator({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Navigator(
       onGenerateRoute: (settings) {
         switch (settings.name) {
-          case 'profile':
-            return MaterialPageRoute(builder: (context) => const UserTab());
-          case 'detail-profile':
+          case 'settings':
+            return MaterialPageRoute(builder: (context) => const SettingsTab());
+          case 'settings-page-one':
             final args = settings.arguments as Map<String, dynamic>?;
             return MaterialPageRoute(
-                builder: (context) => DetailProfile(
+                builder: (context) => SettingPageOne(
                       param1: args?['param1'] ?? '',
                       param2: args?['param2'],
                     ));
           default:
-            return MaterialPageRoute(builder: (context) => const UserTab());
+            return MaterialPageRoute(builder: (context) => const SettingsTab());
         }
       },
     );

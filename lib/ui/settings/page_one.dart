@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:music_app/main.dart';
 
-class DetailProfile extends ConsumerWidget {
-  const DetailProfile({super.key, required this.param1, this.param2 = false});
+class SettingPageOne extends ConsumerWidget {
+  const SettingPageOne({super.key, required this.param1, this.param2 = false});
   final String param1;
   final bool param2;
 
@@ -17,11 +17,11 @@ class DetailProfile extends ConsumerWidget {
     return Scaffold(
       appBar: const CupertinoNavigationBar(
         backgroundColor: Colors.white,
-        middle: Text('Detail Profile'),
+        middle: Text('Setting Page One'),
       ),
       body: Center(
         child: Column(children: [
-          const Text('Detail Profile Screen'),
+          const Text('SettingPageOne'),
           Text('ROUTE PARAMS: {param1:$param1, param2: $param2}'),
           Text('APPSTATE: ${appState.count}'),
           Text(
