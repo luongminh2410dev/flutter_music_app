@@ -67,11 +67,11 @@ class _UserTabState extends State<UserTab> {
                             const Text(
                               'Profile',
                               style: TextStyle(
-                                  inherit: false,
-                                  fontSize: 22,
-                                  height: 1.5,
-                                  color: Color(0xFFFFFFFF),
-                                  fontWeight: FontWeight.w700),
+                                fontSize: 22,
+                                height: 1.5,
+                                color: Color(0xFFFFFFFF),
+                                fontWeight: FontWeight.w700,
+                              ),
                             )
                           ],
                         ),
@@ -115,7 +115,6 @@ class _UserTabState extends State<UserTab> {
                                             overflow: TextOverflow.ellipsis,
                                             'Trung Hoàng',
                                             style: TextStyle(
-                                              inherit: false,
                                               fontSize: 20,
                                               height: 1,
                                               fontWeight: FontWeight.w600,
@@ -144,7 +143,6 @@ class _UserTabState extends State<UserTab> {
                                               const Text(
                                                 'Sửa thông tin',
                                                 style: TextStyle(
-                                                  inherit: false,
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w500,
                                                   color: Color.fromRGBO(
@@ -156,10 +154,10 @@ class _UserTabState extends State<UserTab> {
                                         ),
                                       ],
                                     ),
+                                    const SizedBox(height: 4),
                                     const Text(
                                       'Nam | 12/10/1994',
                                       style: TextStyle(
-                                        inherit: false,
                                         fontSize: 14,
                                         height: 1.5,
                                         fontWeight: FontWeight.w400,
@@ -200,7 +198,6 @@ class _UserTabState extends State<UserTab> {
                   const Text(
                     'Cài đặt',
                     style: TextStyle(
-                      inherit: false,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Color.fromRGBO(113, 120, 134, 1),
@@ -273,7 +270,7 @@ class RowItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(bottom: 8),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
@@ -309,6 +306,7 @@ class RowItem extends StatelessWidget {
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
                     color: Color.fromRGBO(21, 20, 31, 1),
+                    fontFamily: 'Manrope',
                   ),
                 ),
               ),

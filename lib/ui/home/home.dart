@@ -18,6 +18,7 @@ class MusicApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
         useMaterial3: true,
+        fontFamily: 'Manrope',
       ),
       home: const MusicHomePage(),
     );
